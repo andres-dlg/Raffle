@@ -4,12 +4,13 @@ pragma solidity ^0.8.20;
 import {Script, console} from "forge-std/Script.sol";
 import {HelperConfig} from "./HelperConfig.s.sol";
 import {VRFCoordinatorV2Mock} from "@chainlink/contracts/v0.8/mocks/VRFCoordinatorV2Mock.sol";
+import {DevOpsTools} from "@devops/DevOpsTools.sol";
 import {LinkToken} from "../test/mocks/LinkToken.sol";
 
 // Note: To know the signature of a function if you only know its HEX value (like Metamask shows), use https://openchain.xyz/signatures
 
-// To run this script: 
-// forge script script/Interactions.s.sol:CreateSubscription
+// To run this script:
+// forge script script/Interactions.s.sol:CreateSubscription --rpc-url $SEPOLIA_RPC_URL --private-key $PRIVATE_KEY --broadcast
 
 contract CreateSubscription is Script {
     function run() external returns (uint64) {
@@ -37,7 +38,7 @@ contract CreateSubscription is Script {
     }
 }
 
-// To run this script: 
+// To run this script:
 // forge script script/Interactions.s.sol:FundSubscription --rpc-url $SEPOLIA_RPC_URL --private-key $PRIVATE_KEY --broadcast
 
 contract FundSubscription is Script {
@@ -90,5 +91,43 @@ contract FundSubscription is Script {
             vm.stopBroadcast();
         }
         console.log("Funded subscription on ChainId: ", block.chainid);
+    }
+}
+
+// Uses foundry-devops -> https://github.com/Cyfrin/foundry-devops
+contract AddConsumer is Script {
+    function run() external {
+        address raffle = DevOpsTools.get_most_recent_deployment(
+            "Raffle",
+            block.chainid
+        );
+        addConsumerUsingConfig(raffle);
+    }
+
+    function addConsumerUsingConfig(address raffle) internal {
+        HelperConfig helperConfig = new HelperConfig();
+        (, , address vrfCoordinator, , uint64 subscriptionId, , ) = helperConfig
+            .activeNetworkConfig();
+        addConsumer(raffle, vrfCoordinator, subscriptionId);
+    }
+
+    function addConsumer(
+        address raffle,
+        address vrfCoordinator,
+        uint64 subscriptionId
+    ) public {
+        console.log(
+            "Adding consumer contract %s on ChainId: %s",
+            raffle,
+            block.chainid
+        );
+        console.log("Using VRF Coordinator: ", vrfCoordinator);
+        vm.startBroadcast();
+        VRFCoordinatorV2Mock(vrfCoordinator).addConsumer(
+            subscriptionId,
+            raffle
+        );
+        vm.stopBroadcast();
+        console.log("Added consumer on ChainId: ", block.chainid);
     }
 }
