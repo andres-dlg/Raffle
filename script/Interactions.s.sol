@@ -107,7 +107,7 @@ contract AddConsumer is Script {
         addConsumerUsingConfig(raffle);
     }
 
-    function addConsumerUsingConfig(address raffle) internal {
+    function addConsumerUsingConfig(address mostRecentlyDeployedRaffle) internal {
         HelperConfig helperConfig = new HelperConfig();
         (
             ,
@@ -119,7 +119,7 @@ contract AddConsumer is Script {
             ,
             uint256 deployerKey
         ) = helperConfig.activeNetworkConfig();
-        addConsumer(raffle, vrfCoordinator, subscriptionId, deployerKey);
+        addConsumer(mostRecentlyDeployedRaffle, vrfCoordinator, subscriptionId, deployerKey);
     }
 
     function addConsumer(
