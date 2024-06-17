@@ -14,8 +14,11 @@ contract HelperConfig is Script {
         uint64 subscriptionId;
         uint32 callbackGasLimit;
         address link;
+        uint256 deployerKey;
     }
 
+    uint256 public constant DEFAULT_ANVIL_KEY =
+        0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80;
     NetworkConfig public activeNetworkConfig;
 
     constructor() {
@@ -27,21 +30,21 @@ contract HelperConfig is Script {
         }
     }
 
-    function getSepoliaEthConfig() public pure returns (NetworkConfig memory) {
+    function getSepoliaEthConfig() public view returns (NetworkConfig memory) {
         return
             NetworkConfig({
                 entranceFee: 0.01 ether,
                 interval: 30, // seconds
                 vrfCoordinator: 0x9DdfaCa8183c41ad55329BdeeD9F6A8d53168B1B, // VRF Coordinator -> https://docs.chain.link/vrf/v2-5/supported-networks/#sepolia-testnet
                 gasLane: 0x787d74caea10b2b357790d5b5247c2f63d1d91572a9846f780606e4d953677ae, // 100 gwei Key Hash -> https://docs.chain.link/vrf/v2-5/supported-networks/#sepolia-testnet
-                subscriptionId: 0, // The subscription ID given by Chainlink does not fit in uint64. Investigate a workaround
+                subscriptionId: 11901, // The subscription ID given by Chainlink does not fit in uint64. Investigate a workaround
                 callbackGasLimit: 500000,
-                link: 0x779877A7B0D9E8603169DdbD7836e478b4624789 // LINK token contract address -> https://docs.chain.link/resources/link-token-contracts
+                link: 0x779877A7B0D9E8603169DdbD7836e478b4624789, // LINK token contract address -> https://docs.chain.link/resources/link-token-contracts
+                deployerKey: vm.envUint("ZERO_PRIVATE_KEY")
             });
     }
 
-    function getOrCreateAnvilEthConfig() public returns (NetworkConfig memory)
-    {
+    function getOrCreateAnvilEthConfig() public returns (NetworkConfig memory) {
         if (activeNetworkConfig.vrfCoordinator != address(0)) {
             return activeNetworkConfig;
         } else {
@@ -50,19 +53,24 @@ contract HelperConfig is Script {
             uint96 getPriceLink = 1e9; // 1 gwei LINK
 
             vm.startBroadcast();
-            VRFCoordinatorV2Mock vrfCoordinatorMock = new VRFCoordinatorV2Mock(baseFee, getPriceLink);
+            VRFCoordinatorV2Mock vrfCoordinatorMock = new VRFCoordinatorV2Mock(
+                baseFee,
+                getPriceLink
+            );
             LinkToken link = new LinkToken();
             vm.stopBroadcast();
 
-            return NetworkConfig({
-                entranceFee: 0.01 ether,
-                interval: 30, // seconds
-                vrfCoordinator: address(vrfCoordinatorMock),
-                gasLane: 0x787d74caea10b2b357790d5b5247c2f63d1d91572a9846f780606e4d953677ae, // 100 gwei Key Hash -> https://docs.chain.link/vrf/v2-5/supported-networks/#sepolia-testnet
-                subscriptionId: 0, // TODO: Our script will add this
-                callbackGasLimit: 500000,
-                link: address(link)
-            });
+            return
+                NetworkConfig({
+                    entranceFee: 0.01 ether,
+                    interval: 30, // seconds
+                    vrfCoordinator: address(vrfCoordinatorMock),
+                    gasLane: 0x787d74caea10b2b357790d5b5247c2f63d1d91572a9846f780606e4d953677ae, // 100 gwei Key Hash -> https://docs.chain.link/vrf/v2-5/supported-networks/#sepolia-testnet
+                    subscriptionId: 0, // TODO: Our script will add this
+                    callbackGasLimit: 500000,
+                    link: address(link),
+                    deployerKey: DEFAULT_ANVIL_KEY
+                });
         }
     }
 }
