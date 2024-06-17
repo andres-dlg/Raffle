@@ -132,7 +132,10 @@ contract Raffle is VRFConsumerBaseV2 {
     // We want this function to
     // 1. Get a random number
     // 2. User the random number to pick a player
-    // 3. Be automatically called
+    // 3. Be automatically called by Chainlink Automation setup. Make sure to schedule the execution 
+    //    here https://automation.chain.link/sepolia/new if you're using Sepolia or 
+    //    here https://automation.chain.link/new if you are using Mainnet
+    //    Guide -> https://docs.chain.link/chainlink-automation/guides/job-scheduler
     function performUpkeep(bytes calldata /* performData */) external {
         (bool upKeepNeeded, ) = checkUpkeep("");
         if (!upKeepNeeded) {
